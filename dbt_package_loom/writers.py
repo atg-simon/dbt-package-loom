@@ -56,7 +56,7 @@ def _write_folder(
     _write_file(models_dir / "schema.yml", build_schema_yml(fc))
 
     for node in fc.unversioned:
-        filename = f"{node.alias or node.name}.sql"
+        filename = f"{node.name}.sql"
         _write_file(models_dir / filename, build_stub_sql(project_name, node))
 
     for vg in fc.versioned_groups.values():
