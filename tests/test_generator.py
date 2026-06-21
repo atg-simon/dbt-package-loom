@@ -1,6 +1,5 @@
 from dbt_package_loom.generator import (
     VersionedGroup,
-    build_alias_stub_sql,
     build_dbt_project_yml,
     build_schema_yml,
     build_sources_yml,
@@ -271,12 +270,3 @@ class TestBuildStubSql:
         sql = build_stub_sql("jaffle_finance", fct_booking_v1)
         assert "source('jaffle_finance', 'fct_booking_v1')" in sql
 
-    def test_alias_stub_points_to_latest(self, fct_booking_v1, fct_booking_v2):
-        from dbt_package_loom.generator import VersionedGroup
-
-        vg = VersionedGroup(
-            base_name="fct_booking", versions=[fct_booking_v1, fct_booking_v2]
-        )
-        sql = build_alias_stub_sql("jaffle_finance", vg)
-        assert "source('jaffle_finance', 'fct_booking_v2')" in sql
-        assert "Alias for latest version (v2)" in sql

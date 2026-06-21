@@ -28,22 +28,7 @@ class TestWritePackage:
         models_dir = tmp_path / "jaffle_finance" / "models" / "integrated"
         assert (models_dir / "fct_booking_v1.sql").exists()
         assert (models_dir / "fct_booking_v2.sql").exists()
-        assert (models_dir / "fct_booking.sql").exists()  # unversioned alias
-
-    def test_versioned_alias_stub_content(
-        self, tmp_path, fct_booking_v1, fct_booking_v2
-    ):
-        write_package(
-            "jaffle_finance",
-            [fct_booking_v1, fct_booking_v2],
-            output_dir=str(tmp_path),
-        )
-        alias_sql = (
-            tmp_path / "jaffle_finance" / "models" / "integrated" / "fct_booking.sql"
-        )
-        content = alias_sql.read_text()
-        assert "source('jaffle_finance', 'fct_booking_v2')" in content
-        assert "Alias for latest version (v2)" in content
+        assert not (models_dir / "fct_booking.sql").exists()  # dbt handles alias routing
 
     def test_overwrites_existing_package(self, tmp_path, dim_customer):
         pkg_dir = tmp_path / "jaffle_finance"
@@ -67,7 +52,7 @@ class TestWritePackage:
         assert (root / "models" / "conformed" / "schema.yml").exists()
         assert (root / "models" / "integrated" / "fct_booking_v1.sql").exists()
         assert (root / "models" / "integrated" / "fct_booking_v2.sql").exists()
-        assert (root / "models" / "integrated" / "fct_booking.sql").exists()
+        assert not (root / "models" / "integrated" / "fct_booking.sql").exists()
         assert (root / "models" / "integrated" / "sources.yml").exists()
         assert (root / "models" / "integrated" / "schema.yml").exists()
 

@@ -7,7 +7,6 @@ from typing import List
 
 from dbt_package_loom.generator import (
     FolderContent,
-    build_alias_stub_sql,
     build_dbt_project_yml,
     build_schema_yml,
     build_sources_yml,
@@ -63,8 +62,6 @@ def _write_folder(
         for node in vg.versions:
             filename = f"{node.file_stem}.sql"
             _write_file(models_dir / filename, build_stub_sql(project_name, node))
-        alias_filename = f"{vg.base_name}.sql"
-        _write_file(models_dir / alias_filename, build_alias_stub_sql(project_name, vg))
 
 
 def _write_file(path: Path, content: str) -> None:
