@@ -35,7 +35,7 @@ def inject(config_path: str) -> None:
 
     errors: list[str] = []
     for ref in loom_config.manifests:
-        click.echo(f"  → {ref.name} ({ref.type.value})")
+        click.echo(f"  -> {ref.name} ({ref.type.value})")
         try:
             loader = ManifestLoader(ref)
             manifest = loader.load()
