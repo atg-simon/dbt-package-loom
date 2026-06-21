@@ -97,6 +97,7 @@ def build_dbt_project_yml(project_name: str) -> str:
         "models": {
             project_name: {
                 "+materialized": "ephemeral",
+                "+schema": project_name,
                 "+tags": ["package-mesh-stub"],
             }
         },

@@ -103,6 +103,10 @@ class TestBuildDbtProjectYml:
         yml = build_dbt_project_yml("jaffle_finance")
         assert "config-version: 2" in yml
 
+    def test_schema_namespaced_to_project(self):
+        yml = build_dbt_project_yml("atg_source")
+        assert "+schema: atg_source" in yml
+
 
 class TestBuildSourcesYml:
     def test_output_is_valid_yaml(self, dim_customer):
