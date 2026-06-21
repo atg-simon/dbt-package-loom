@@ -105,7 +105,15 @@ class TestBuildDbtProjectYml:
 
 
 class TestBuildSourcesYml:
-    def test_description_with_special_characters(self):
+    def test_output_is_valid_yaml(self, dim_customer):
+        from dbt_package_loom.generator import FolderContent
+        import yaml as _yaml
+
+        fc = FolderContent(folder="conformed", unversioned=[dim_customer])
+        parsed = _yaml.safe_load(build_sources_yml("proj", fc))
+        assert parsed["sources"][0]["tables"][0]["name"] == "dim_customer"
+
+    def test_descriptions_not_copied(self):
         from dbt_package_loom.generator import FolderContent
 
         node = ManifestNode.model_validate({
@@ -116,17 +124,11 @@ class TestBuildSourcesYml:
             "schema": "conformed",
             "path": "conformed/dim_customer.sql",
             "access": "public",
-            "description": 'Contains "quoted" text: with a colon',
+            "description": "Some upstream description",
         })
         fc = FolderContent(folder="conformed", unversioned=[node])
-        sources_yml = build_sources_yml("proj", fc)
-        schema_yml = build_schema_yml(fc)
-        # Both must be parseable YAML
-        import yaml as _yaml
-        parsed_sources = _yaml.safe_load(sources_yml)
-        parsed_schema = _yaml.safe_load(schema_yml)
-        assert parsed_sources["sources"][0]["tables"][0]["description"] == 'Contains "quoted" text: with a colon'
-        assert parsed_schema["models"][0]["description"] == 'Contains "quoted" text: with a colon'
+        assert "description" not in build_sources_yml("proj", fc)
+        assert "description" not in build_schema_yml(fc)
 
     def test_unversioned_source_table(self, dim_customer):
         from dbt_package_loom.generator import FolderContent

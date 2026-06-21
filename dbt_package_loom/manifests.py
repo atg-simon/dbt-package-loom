@@ -27,7 +27,6 @@ class ManifestNode(BaseModel):
     latest_version: Optional[Union[int, str]] = None
     access: Optional[str] = None
     path: str = ""
-    description: Optional[str] = ""
     alias: Optional[str] = None
 
     model_config = {"populate_by_name": True}

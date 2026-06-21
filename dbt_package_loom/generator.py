@@ -23,10 +23,6 @@ class VersionedGroup:
         return max(self.versions, key=lambda n: _version_key(n.version))
 
     @property
-    def description(self) -> str:
-        return self.versions[0].description or ""
-
-    @property
     def latest_version_number(self) -> Union[int, str]:
         v = self.latest.version
         if v is None:
@@ -112,20 +108,12 @@ def build_sources_yml(project_name: str, folder_content: FolderContent) -> str:
 
     for node in folder_content.unversioned:
         alias = node.alias or node.name
-        tables.append({
-            "name": alias,
-            "identifier": alias,
-            "description": node.description or "",
-        })
+        tables.append({"name": alias, "identifier": alias})
 
     for vg in folder_content.versioned_groups.values():
         for node in vg.versions:
             alias = node.alias or node.name
-            tables.append({
-                "name": alias,
-                "identifier": alias,
-                "description": node.description or "",
-            })
+            tables.append({"name": alias, "identifier": alias})
 
     source: dict = {"name": project_name}
     if folder_content.database:
@@ -140,12 +128,11 @@ def build_schema_yml(folder_content: FolderContent) -> str:
     models = []
 
     for node in folder_content.unversioned:
-        models.append({"name": node.name, "description": node.description or ""})
+        models.append({"name": node.name})
 
     for vg in folder_content.versioned_groups.values():
         models.append({
             "name": vg.base_name,
-            "description": vg.description,
             "latest_version": vg.latest_version_number,
             "versions": [
                 {"v": n.version, "defined_in": n.alias or n.name}
