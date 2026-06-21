@@ -3,7 +3,7 @@ name = "dbt-package-loom"
 version = "0.1.0"
 description = "CLI tool that injects ephemeral dbt package stubs from upstream project manifests"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "click>=8.0",
     "pyyaml>=6.0",
