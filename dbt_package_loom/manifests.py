@@ -42,6 +42,13 @@ class ManifestNode(BaseModel):
     def folder(self) -> str:
         return str(PurePosixPath(self.path).parent).replace("\\", "/").strip("/.")
 
+    @property
+    def file_stem(self) -> str:
+        """Filename stem for the generated SQL stub (path stem takes priority over alias)."""
+        if self.path:
+            return PurePosixPath(self.path).stem
+        return self.alias or self.name
+
 
 class ManifestLoader:
     def __init__(self, reference: ManifestReference) -> None:

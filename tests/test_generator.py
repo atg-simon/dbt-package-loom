@@ -211,8 +211,37 @@ class TestBuildSchemaYml:
         assert "versions:" in yml
         assert "v: 1" in yml
         assert "v: 2" in yml
+        # defined_in uses path stem, not alias
         assert "defined_in: fct_booking_v1" in yml
         assert "defined_in: fct_booking_v2" in yml
+
+    def test_defined_in_uses_path_stem_not_alias(self):
+        """Two models with same alias but different path stems must not clash."""
+        from dbt_package_loom.generator import FolderContent, VersionedGroup
+
+        node_av = ManifestNode.model_validate({
+            "name": "ent_order_item", "package_name": "atg_source",
+            "unique_id": "model.atg_source.ent_order_item.v3",
+            "resource_type": "model", "schema": "s", "version": 3,
+            "alias": "ent_order_item_v3",
+            "path": "entity/av_uk/dynamic_tables/ent_order_item_v3.sql",
+        })
+        node_das = ManifestNode.model_validate({
+            "name": "ent_das__order_item", "package_name": "atg_source",
+            "unique_id": "model.atg_source.ent_das__order_item.v3",
+            "resource_type": "model", "schema": "s", "version": 3,
+            "alias": "ent_order_item_v3",
+            "path": "entity/das/dynamic_tables/ent_das__order_item_v3.sql",
+        })
+        assert node_av.file_stem == "ent_order_item_v3"
+        assert node_das.file_stem == "ent_das__order_item_v3"
+
+        vg_av = VersionedGroup(base_name="ent_order_item", versions=[node_av])
+        vg_das = VersionedGroup(base_name="ent_das__order_item", versions=[node_das])
+        yml_av = build_schema_yml(FolderContent(folder="entity/av_uk/dynamic_tables", versioned_groups={"ent_order_item": vg_av}))
+        yml_das = build_schema_yml(FolderContent(folder="entity/das/dynamic_tables", versioned_groups={"ent_das__order_item": vg_das}))
+        assert "defined_in: ent_order_item_v3" in yml_av
+        assert "defined_in: ent_das__order_item_v3" in yml_das
 
 
 class TestBuildStubSql:

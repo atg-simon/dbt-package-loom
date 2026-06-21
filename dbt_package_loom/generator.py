@@ -134,7 +134,7 @@ def build_schema_yml(folder_content: FolderContent) -> str:
             "name": vg.base_name,
             "latest_version": vg.latest_version_number,
             "versions": [
-                {"v": n.version, "defined_in": n.alias or n.name}
+                {"v": n.version, "defined_in": n.file_stem}
                 for n in vg.versions
             ],
         })
