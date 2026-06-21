@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Union
 
+import yaml
+
 from dbt_package_loom.manifests import ManifestNode
 
 
@@ -28,7 +30,9 @@ class VersionedGroup:
     def latest_version_number(self) -> Union[int, str]:
         v = self.latest.version
         if v is None:
-            raise ValueError(f"Versioned group '{self.base_name}' has a node with no version set")
+            raise ValueError(
+                f"Versioned group '{self.base_name}' has a node with no version set"
+            )
         return v
 
 
@@ -62,6 +66,10 @@ def _version_key(v: Optional[Union[int, str]]) -> Union[int, str]:
         return str(v)
 
 
+def _yaml(doc: dict) -> str:
+    return yaml.dump(doc, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
 def group_nodes_by_folder(nodes: List[ManifestNode]) -> Dict[str, FolderContent]:
     folders: Dict[str, FolderContent] = {}
 
@@ -86,81 +94,66 @@ def group_nodes_by_folder(nodes: List[ManifestNode]) -> Dict[str, FolderContent]
 
 
 def build_dbt_project_yml(project_name: str) -> str:
-    return (
-        f"name: {project_name}\n"
-        "version: '1.0.0'\n"
-        "config-version: 2\n"
-        "\n"
-        f"models:\n"
-        f"  {project_name}:\n"
-        "    +materialized: ephemeral\n"
-        "    +tags:\n"
-        "      - package-mesh-stub\n"
-    )
+    return _yaml({
+        "name": project_name,
+        "version": "1.0.0",
+        "config-version": 2,
+        "models": {
+            project_name: {
+                "+materialized": "ephemeral",
+                "+tags": ["package-mesh-stub"],
+            }
+        },
+    })
 
 
 def build_sources_yml(project_name: str, folder_content: FolderContent) -> str:
-    tables: List[str] = []
+    tables = []
 
     for node in folder_content.unversioned:
         alias = node.alias or node.name
-        desc = node.description or ""
-        tables.append(
-            f"      - name: {alias}\n"
-            f"        identifier: {alias}\n"
-            f'        description: "{desc}"\n'
-        )
+        tables.append({
+            "name": alias,
+            "identifier": alias,
+            "description": node.description or "",
+        })
 
     for vg in folder_content.versioned_groups.values():
         for node in vg.versions:
             alias = node.alias or node.name
-            desc = node.description or ""
-            tables.append(
-                f"      - name: {alias}\n"
-                f"        identifier: {alias}\n"
-                f'        description: "{desc}"\n'
-            )
+            tables.append({
+                "name": alias,
+                "identifier": alias,
+                "description": node.description or "",
+            })
 
-    database_line = (
-        f"    database: {folder_content.database}\n" if folder_content.database else ""
-    )
-    tables_block = "".join(tables)
-    return (
-        "version: 2\n"
-        "\n"
-        "sources:\n"
-        f"  - name: {project_name}\n"
-        f"{database_line}"
-        f"    schema: {folder_content.schema_name}\n"
-        "    tables:\n"
-        f"{tables_block}"
-    )
+    source: dict = {"name": project_name}
+    if folder_content.database:
+        source["database"] = folder_content.database
+    source["schema"] = folder_content.schema_name
+    source["tables"] = tables
+
+    return _yaml({"version": 2, "sources": [source]})
 
 
 def build_schema_yml(folder_content: FolderContent) -> str:
-    model_entries: List[str] = []
+    models = []
 
     for node in folder_content.unversioned:
-        desc = node.description or ""
-        model_entries.append(f'  - name: {node.name}\n    description: "{desc}"\n')
+        models.append({"name": node.name, "description": node.description or ""})
 
     for vg in folder_content.versioned_groups.values():
-        desc = vg.description
-        lv = vg.latest_version_number
-        versions_block = "".join(
-            f"      - v: {n.version}\n        defined_in: {n.alias or n.name}\n"
-            for n in vg.versions
-        )
-        model_entries.append(
-            f"  - name: {vg.base_name}\n"
-            f'    description: "{desc}"\n'
-            f"    latest_version: {lv}\n"
-            f"    versions:\n"
-            f"{versions_block}"
-        )
+        models.append({
+            "name": vg.base_name,
+            "description": vg.description,
+            "latest_version": vg.latest_version_number,
+            "versions": [
+                {"v": n.version, "defined_in": n.alias or n.name}
+                for n in vg.versions
+            ],
+        })
 
-    models_block = "".join(model_entries)
-    return "version: 2\n\nmodels:\n" + models_block
+    return _yaml({"version": 2, "models": models})
 
 
 def build_stub_sql(project_name: str, node: ManifestNode) -> str:

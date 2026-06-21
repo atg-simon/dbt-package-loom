@@ -105,6 +105,29 @@ class TestBuildDbtProjectYml:
 
 
 class TestBuildSourcesYml:
+    def test_description_with_special_characters(self):
+        from dbt_package_loom.generator import FolderContent
+
+        node = ManifestNode.model_validate({
+            "name": "dim_customer",
+            "package_name": "proj",
+            "unique_id": "model.proj.dim_customer",
+            "resource_type": "model",
+            "schema": "conformed",
+            "path": "conformed/dim_customer.sql",
+            "access": "public",
+            "description": 'Contains "quoted" text: with a colon',
+        })
+        fc = FolderContent(folder="conformed", unversioned=[node])
+        sources_yml = build_sources_yml("proj", fc)
+        schema_yml = build_schema_yml(fc)
+        # Both must be parseable YAML
+        import yaml as _yaml
+        parsed_sources = _yaml.safe_load(sources_yml)
+        parsed_schema = _yaml.safe_load(schema_yml)
+        assert parsed_sources["sources"][0]["tables"][0]["description"] == 'Contains "quoted" text: with a colon'
+        assert parsed_schema["models"][0]["description"] == 'Contains "quoted" text: with a colon'
+
     def test_unversioned_source_table(self, dim_customer):
         from dbt_package_loom.generator import FolderContent
 
