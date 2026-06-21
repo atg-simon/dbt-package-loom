@@ -29,15 +29,17 @@ This tool sidesteps the problem: it runs _before_ `dbt run` and writes stub pack
 
 ## Installation
 
+**Developer machine** (uv tool — isolated environment):
 ```bash
 uv tool install "dbt-package-loom @ git+https://github.com/atg-simon/dbt-package-loom.git"
 ```
 
-Or into a project virtualenv:
-
+**CI / container where dbt is already installed** (install into the same environment as dbt):
 ```bash
-uv add "dbt-package-loom @ git+https://github.com/atg-simon/dbt-package-loom.git"
+pip install "dbt-package-loom @ git+https://github.com/atg-simon/dbt-package-loom.git"
 ```
+
+> **Note:** If you use `uv tool install` in an environment where `PYTHONPATH` includes dbt's site-packages (common in dbt Docker images), the tool will pick up dbt's pydantic build and fail with a `pydantic_core` import error. Either install via `pip` into the dbt environment, or clear `PYTHONPATH` before invoking: `PYTHONPATH= dbt-package-loom inject`.
 
 ## Usage
 
